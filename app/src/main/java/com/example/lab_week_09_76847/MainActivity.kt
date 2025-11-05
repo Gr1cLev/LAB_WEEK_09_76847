@@ -1,5 +1,6 @@
 package com.example.lab_week_09_76847
 
+import android.net.Uri
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -7,6 +8,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
@@ -29,6 +31,9 @@ import com.example.lab_week_09_76847.ui.theme.LAB_WEEK_09_76847Theme
 import com.example.lab_week_09_76847.ui.theme.OnBackgroundItemText
 import com.example.lab_week_09_76847.ui.theme.OnBackgroundTitleText
 import com.example.lab_week_09_76847.ui.theme.PrimaryTextButton
+import com.squareup.moshi.Moshi
+import com.squareup.moshi.Types
+import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 
 // Navigation imports
 import androidx.navigation.NavType
@@ -93,7 +98,10 @@ fun App(navController: NavHostController) {
         composable("home") {
             //Here, we pass a lambda function that navigates to "resultContent"
             //and pass the listData as a parameter
-            Home { navController.navigate("resultContent/?listData=$it") }
+            Home { json ->
+                val encodedJson = Uri.encode(json)
+                navController.navigate("resultContent/?listData=$encodedJson")
+            }
         }
 
         //Here, we create a route called "resultContent"
@@ -139,6 +147,16 @@ fun Home(
     //This is so that we can get the value of the input field
     var inputField = remember { mutableStateOf(Student("")) }
 
+    val moshi = remember {
+        Moshi.Builder()
+            .addLast(KotlinJsonAdapterFactory())
+            .build()
+    }
+    val studentListAdapter = remember(moshi) {
+        val type = Types.newParameterizedType(List::class.java, Student::class.java)
+        moshi.adapter<List<Student>>(type)
+    }
+
     //We call the HomeContent composable
     //Here, we pass:
     //listData to show the list of items inside HomeContent
@@ -156,7 +174,10 @@ fun Home(
             }
         },
         //Here, we pass a lambda that will navigate with listData as String
-        { navigateFromHomeToResult(listData.toList().toString()) }
+        {
+            val json = studentListAdapter.toJson(listData)
+            navigateFromHomeToResult(json)
+        }
     )
 }
 
@@ -210,12 +231,17 @@ fun HomeContent(
                 )
 
                 Row {
-                    PrimaryTextButton(text = stringResource(id = R.string.button_click)) {
-                        onButtonClick()
-                    }
-                    PrimaryTextButton(text = stringResource(id = R.string.button_navigate)) {
-                        navigateFromHomeToResult()
-                    }
+                    PrimaryTextButton(
+                        text = stringResource(id = R.string.button_click),
+                        onClick = {
+                            onButtonClick()
+                        },
+                        enabled = inputField.name.isNotBlank()
+                    )
+                    PrimaryTextButton(
+                        text = stringResource(id = R.string.button_navigate),
+                        onClick = { navigateFromHomeToResult() }
+                    )
                 }
             }
         }
@@ -241,13 +267,41 @@ fun HomeContent(
 //then displays the value of listData to the screen
 @Composable
 fun ResultContent(listData: String) {
-    Column(
+    val moshi = remember {
+        Moshi.Builder()
+            .addLast(KotlinJsonAdapterFactory())
+            .build()
+    }
+    val studentListAdapter = remember(moshi) {
+        val type = Types.newParameterizedType(List::class.java, Student::class.java)
+        moshi.adapter<List<Student>>(type)
+    }
+    val students = remember(listData, studentListAdapter) {
+        val decodedJson = Uri.decode(listData)
+        runCatching {
+            if (decodedJson.isBlank()) {
+                emptyList()
+            } else {
+                studentListAdapter.fromJson(decodedJson).orEmpty()
+            }
+        }.getOrElse { emptyList() }
+    }
+
+    LazyColumn(
         modifier = Modifier
-            .padding(vertical = 4.dp)
-            .fillMaxSize(),
-        horizontalAlignment = Alignment.CenterHorizontally
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .fillMaxSize()
     ) {
-        //Here, we call the OnBackgroundItemText UI Element
-        OnBackgroundItemText(text = listData)
+        items(students) { item ->
+            Column(
+                modifier = Modifier
+                    .padding(vertical = 4.dp)
+                    .fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                //Here, we call the OnBackgroundItemText UI Element
+                OnBackgroundItemText(text = item.name)
+            }
+        }
     }
 }
