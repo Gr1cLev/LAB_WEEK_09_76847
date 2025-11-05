@@ -3,16 +3,16 @@ package com.example.lab_week_09_76847
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateListOf
@@ -25,6 +25,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.example.lab_week_09_76847.ui.theme.LAB_WEEK_09_76847Theme
+import com.example.lab_week_09_76847.ui.theme.OnBackgroundItemText
+import com.example.lab_week_09_76847.ui.theme.OnBackgroundTitleText
+import com.example.lab_week_09_76847.ui.theme.PrimaryTextButton
 
 //Previously we extend AppCompatActivity,
 //now we extend ComponentActivity
@@ -32,12 +35,12 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
+        enableEdgeToEdge()
         //Here, we use setContent instead of setContentView
         setContent {
 
             //Here, we wrap our content with the theme
-            //You can check out the LAB_WEEK_09_76847Theme inside Theme.kt
+            //You can check out the LAB_WEEK_09Theme inside Theme.kt
             LAB_WEEK_09_76847Theme {
 
                 // A surface container using the 'background' color from the theme
@@ -69,13 +72,11 @@ fun Home() {
     //This is so that we can add or remove items from the list
     //If you're still confused, this is basically the same concept as using
     //useState in React
-    val listData = remember {
-        mutableStateListOf(
-            Student("Tanu"),
-            Student("Tina"),
-            Student("Tono")
-        )
-    }
+    val listData = remember { mutableStateListOf(
+        Student("Tanu"),
+        Student("Tina"),
+        Student("Tono")
+    )}
 
     //Here, we create a mutable state of Student
     //This is so that we can get the value of the input field
@@ -121,16 +122,16 @@ fun HomeContent(
                 //to add padding to each side
                 modifier = Modifier
                     .padding(16.dp)
-                    .fillMaxSize(),
+                    .fillMaxWidth(),
                 //Alignment.CenterHorizontally is used to align the Column horizontally
                 //You can also use verticalArrangement = Arrangement.Center to align the Column vertically
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text(
-                    text = stringResource(
-                        id = R.string.enter_item
-                    )
+                //Here, we call the OnBackgroundTitleText UI Element
+                OnBackgroundTitleText(text = stringResource(
+                    id = R.string.enter_item)
                 )
+
                 //Here, we use TextField to display a text input field
                 TextField(
                     //Set the value of the input field
@@ -147,20 +148,12 @@ fun HomeContent(
                         onInputValueChange(it)
                     }
                 )
-                //Here, we use Button to display a button
-                //the onClick parameter is used to set what happens when the button is clicked
-                Button(onClick = {
-                    //Here, we call the onButtonClick lambda function
-                    //This is so that we can add the inputField value to the listData
-                    //and reset the value of the inputField
+
+                //Here, we call the PrimaryTextButton UI Element
+                PrimaryTextButton(text = stringResource(
+                    id = R.string.button_click)
+                ) {
                     onButtonClick()
-                }) {
-                    //Set the text of the button
-                    Text(
-                        text = stringResource(
-                            id = R.string.button_click
-                        )
-                    )
                 }
             }
         }
@@ -171,10 +164,11 @@ fun HomeContent(
             Column(
                 modifier = Modifier
                     .padding(vertical = 4.dp)
-                    .fillMaxSize(),
+                    .fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text(text = item.name)
+                //Here, we call the OnBackgroundItemText UI Element
+                OnBackgroundItemText(text = item.name)
             }
         }
     }
